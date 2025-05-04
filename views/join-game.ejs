@@ -7,7 +7,17 @@
 </head>
 <body>
     <h1>Join Game</h1>
-    <p>Join game functionality coming soon...</p>
+    <form action="/join-game" method="POST">
+        <div>
+            <label for="playerName">Your Name:</label>
+            <input type="text" id="playerName" name="playerName" required>
+        </div>
+        <div>
+            <label for="gameCode">Game Code:</label>
+            <input type="text" id="gameCode" name="gameCode" required>
+        </div>
+        <button type="submit">Join Game</button>
+    </form>
     
     <a href="/">Back to Home</a>
 </body>
