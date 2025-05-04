@@ -1,20 +1,35 @@
-var express = require('express')
-var mongoDao = require('./mongoDao')
-var app = express()
-app.use(express.static('public'));
-app.set('view engine', 'ejs') // after app variable
-// body-parser middleware to parse JSON and URL-encoded bodies
+// server.js
+const express = require('express')
+const app = express()
+const http = require('http')
+const server = http.createServer(app)
+const io = require('socket.io')(server)
+const mongoDao = require('./mongoDao')
+
+// Middleware setup
+app.use(express.static('public'))
+app.set('view engine', 'ejs')
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-const io = require('socket.io')(server)
-
-//Runs everytime client connects to server
-io.on('connection', socket =>{
-    console.log(socket.id)
+// Socket.IO event handlers
+io.on('connection', socket => {
+    console.log('Client connected:', socket.id)
+    
+    socket.on('player-name', (string) => {
+        console.log('Player name received:', string)
+    })
+    
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id)
+    })
 })
-// Start server on 3004 
-const server = app.listen(3004, () => {
-    console.log("Running on port 3004")
 
+// Import and use routes
+const gameRoutes = require('./game-routes/routes')
+app.use('/', gameRoutes)
+
+// Start server
+server.listen(3004, () => {
+    console.log("Server running on port 3004")
 })
