@@ -22,11 +22,18 @@
   // Socket.IO event handlers
     io.on('connection', socket => {
         console.log('Client connected:', socket.id)
-        
-    
     })
-
-
+    io.on('connection', (socket) => {
+        console.log('a user connected');
+        socket.on('disconnect', () => {
+          console.log('user disconnected');
+        });
+      });
+      io.on('connection', (socket) => {
+        socket.on('chat message', (msg) => {
+          console.log('message: ' + msg);
+        });
+      });
     // Start server
     server.listen(3004, () => {
         console.log("Server running on port 3004")
