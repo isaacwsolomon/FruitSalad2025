@@ -30,7 +30,26 @@ router.post('/join-game', (req, res) => {
     
     mongoDao.joinGame({ playerName, gameCode })
     .then((result) => {
-        res.redirect('/waiting-room') // Or wherever you want to go after joining
+        res.redirect('/waiting-room') 
+    })
+    .catch((error) => {
+        if (error.message.includes("E11000")) {
+            res.status(400).send("Error: Game or player name already exists")
+        } else {
+            console.error("Database error:", error)
+            res.status(500).send(error.message)
+        }
+    })
+})
+
+// Join game form submission for player creating game 
+router.post('/create-game', (req, res) => {
+    const { playerName, gameCode } = req.body
+    console.log("Joining game with:", playerName, gameCode)
+    
+    mongoDao.joinGame({ playerName, gameCode })
+    .then((result) => {
+        res.redirect('/waiting-room') 
     })
     .catch((error) => {
         if (error.message.includes("E11000")) {

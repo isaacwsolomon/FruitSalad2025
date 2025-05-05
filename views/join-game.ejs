@@ -30,7 +30,7 @@
       var playerName = document.getElementById('playerName');
     
       form.addEventListener('submit', function(e) {
-        e.preventDefault();
+        //e.preventDefault();
         if (playerName.value) {
           socket.emit('chat message', playerName.value);
           playerName.value = '';
