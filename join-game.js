@@ -1,3 +1,5 @@
+const mongoDao = require('./mongoDao')
+
 const socket = io('http://localhost:3004')
 // Listens to any event that runs everytime connect to server
 socket.on('connect', ()=>{
@@ -5,3 +7,4 @@ socket.on('connect', ()=>{
 })
 
 socket.emit(`player-name`, "hi")
+
