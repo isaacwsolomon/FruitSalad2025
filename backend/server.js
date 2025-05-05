@@ -34,6 +34,12 @@
           console.log('message: ' + msg);
         });
       });
+
+      io.on('connection', (socket) => {
+        socket.on('chat message', (msg) => {
+          io.emit('chat message', msg);
+        });
+      });
     // Start server
     server.listen(3004, () => {
         console.log("Server running on port 3004")
