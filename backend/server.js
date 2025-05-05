@@ -3,31 +3,29 @@
     const app = express()
     const http = require('http')
     const server = http.createServer(app)
-    const io = require('socket.io')(server)
+    
     const mongoDao = require('./mongoDao')
-
+    const io = require('socket.io')(server)
     // Middleware setup
     app.use(express.static('public'))
     app.set('view engine', 'ejs')
     app.use(express.json())
     app.use(express.urlencoded({ extended: true }))
 
-    // // Socket.IO event handlers
-    // io.on('connection', socket => {
-    //     console.log('Client connected:', socket.id)
-        
-    //     socket.on('player-name', (string) => {
-    //         console.log('Player name received:', string)
-    //     })
-        
-    //     socket.on('disconnect', () => {
-    //         console.log('Client disconnected:', socket.id)
-    //     })
-    // })
-
+  
     // Import and use routes
     const gameRoutes = require('./routes')
     app.use('/', gameRoutes)
+
+    
+
+  // Socket.IO event handlers
+    io.on('connection', socket => {
+        console.log('Client connected:', socket.id)
+        
+    
+    })
+
 
     // Start server
     server.listen(3004, () => {

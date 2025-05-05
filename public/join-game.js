@@ -1,3 +1,4 @@
+import { io } from 'socket.io-client'
 const mongoDao = require('../backend/mongoDao')
 
 const socket = io('http://localhost:3004')
