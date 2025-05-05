@@ -26,7 +26,7 @@
     // })
 
     // Import and use routes
-    const gameRoutes = require('./game-routes/routes')
+    const gameRoutes = require('./routes')
     app.use('/', gameRoutes)
 
     // Start server

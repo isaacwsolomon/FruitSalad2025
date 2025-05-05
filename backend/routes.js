@@ -1,7 +1,7 @@
 // routes/gameRoutes.js
 const express = require('express')
 const router = express.Router()
-const mongoDao = require('../mongoDao');
+const mongoDao = require('./mongoDao');
 
 // Route for the home page
 router.get("/", (req, res) => {
@@ -19,7 +19,7 @@ router.get("/create-game", (req, res) => {
     res.render("create-game", { gameCode })
 })
 
-// Join game form submission (POST)
+// Join game form submission 
 router.post('/join-game', (req, res) => {
     const { playerName, gameCode } = req.body
     console.log("Joining game with:", playerName, gameCode)
