@@ -19,6 +19,10 @@ router.get("/create-game", (req, res) => {
     res.render("create-game", { gameCode })
 })
 
+router.get("/waiting-room", (req,res) => {
+    res.render("waiting-room")
+})
+
 // Join game form submission 
 router.post('/join-game', (req, res) => {
     const { playerName, gameCode } = req.body
