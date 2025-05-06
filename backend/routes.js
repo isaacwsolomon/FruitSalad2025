@@ -20,11 +20,13 @@ router.get("/create-game", (req, res) => {
 })
 
 router.get("/waiting-room", (req,res) => {
-    res.render("waiting-room")
+     // Get gameCode from query parameter
+     const gameCode = req.query.gameCode || ""
+     res.render("waiting-room", { gameCode })
 })
 
-// Join game form submission 
-router.post('/join-game', (req, res) => {
+// Waiting room form submission 
+router.post('/waiting-room', (req, res) => {
     const { playerName, gameCode } = req.body
     console.log("Joining game with:", playerName, gameCode)
     
@@ -40,6 +42,15 @@ router.post('/join-game', (req, res) => {
             res.status(500).send(error.message)
         }
     })
+})
+// Join with game code 
+router.post('/join-game', (req, res) => {
+    const { gameCode } = req.body
+    console.log("Joining game with:", gameCode)
+    
+    //res.redirect("/waiting-room")
+    // Pass gameCode as query parameter to waiting room
+    res.redirect(`/waiting-room?gameCode=${gameCode}`)
 })
 
 // Join game form submission for player creating game 
@@ -61,7 +72,7 @@ router.post('/create-game', (req, res) => {
     })
 })
 
-// Utility function
+// Creates random string 
 function createRandomString(length) {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     let result = ""
