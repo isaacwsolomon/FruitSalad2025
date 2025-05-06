@@ -7,42 +7,15 @@
 </head>
 <body>
     <h1>Join Game</h1>
-    <ul id="waitingRoomPlayers">
+  
     <form action="/join-game" method="POST" id="form">
-        <div>
-            <label for="playerName">Your Name:</label>
-            <input type="text" id="playerName" name="playerName" required>
-        </div>
         <div>
             <label for="gameCode">Game Code:</label>
             <input type="text" id="gameCode" name="gameCode" required>
         </div>
         <button type="submit">Join Game</button>
     </form>
-</ul>
     <a href="/">Back to Home</a>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-      var socket = io();
-    
-      var waitingRoomPlayers = document.getElementById('waitingRoomPlayers');
-      var form = document.getElementById('form');
-      var playerName = document.getElementById('playerName');
-    
-      form.addEventListener('submit', function(e) {
-        //e.preventDefault();
-        if (playerName.value) {
-          socket.emit('chat message', playerName.value);
-          playerName.value = '';
-        }
-      });
-
-      socket.on('chat message', function(msg) {
-    var item = document.createElement('li');
-    item.textContent = msg;
-    waitingRoomPlayers.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
-  });
-    </script>
+   
 </body>
 </html>
