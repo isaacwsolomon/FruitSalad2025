@@ -26,34 +26,61 @@ io.on('connection', socket => {
     // When a client requests players for a game
     socket.on('get players', async (gameCode) => {
         try {
+            // First check if the game exists
+            const exists = await mongoDao.gameExists(gameCode);
+            if (!exists) {
+                socket.emit('error', { message: 'Game not found' });
+                return;
+            }
+            
+            // Get players from database for this game code
             const players = await mongoDao.getPlayersInGame(gameCode);
+            // Send players list back to client
             socket.emit('players list', players);
         } catch (error) {
             console.error('Error getting players:', error);
-            socket.emit('players list', []);
+            socket.emit('error', { message: 'Failed to get players' });
         }
     });
   
     // When a client joins a game
     socket.on('join game', async (data) => {
         try {
+            // Validate that game exists before allowing join
+            const exists = await mongoDao.gameExists(data.gameCode);
+            if (!exists) {
+                socket.emit('error', { message: 'Game not found. Please check your game code.' });
+                return;
+            }
+            
+            // Save player to database
             await mongoDao.joinGame({
                 playerName: data.playerName,
                 gameCode: data.gameCode
             });
             
-            // Get updated players list and broadcast to all clients
+            // Get updated players list and broadcast to all clients for this game
             const updatedPlayers = await mongoDao.getPlayersInGame(data.gameCode);
-            io.emit('players list', updatedPlayers);
             
-            // Also emit player joined event for any additional handling
+            // Broadcast updated players list to all clients
+            io.emit('players list update', {
+                gameCode: data.gameCode,
+                players: updatedPlayers
+            });
+            
+            // Also emit player joined event
             io.emit('player joined', {
                 playerName: data.playerName,
                 gameCode: data.gameCode
             });
+            
         } catch (error) {
             console.error('Error joining game:', error);
-            socket.emit('error', { message: 'Failed to join game' });
+            if (error.message.includes("E11000")) {
+                socket.emit('error', { message: 'Player name already exists in this game' });
+            } else {
+                socket.emit('error', { message: 'Failed to join game' });
+            }
         }
     });
 })

@@ -10,18 +10,20 @@
     <h2>Game Code: <span><%= gameCode %></span></h2>
     <form action="/create-game" method="POST">
         <input type="hidden" name="gameCode" value="<%= gameCode %>">
-        <label for="cardsPerPlayer">Cards per player:</label>
-        <input type="number" name="cardsPerPlayer" min="5" max="10" value="5">
-        <button type="submit">Create Game</button>
+        
         <div>
             <label for="playerName">Your Name:</label>
             <input type="text" id="playerName" name="playerName" required>
         </div>
+        
+        <div>
+            <label for="cardsPerPlayer">Cards per player:</label>
+            <input type="number" name="cardsPerPlayer" min="5" max="10" value="5">
+        </div>
+        
+        <button type="submit">Create Game</button>
     </form>
     
-      
-      
     <a href="/">Back to Home</a>
-    
 </body>
 </html>

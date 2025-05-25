@@ -19,57 +19,89 @@ router.get("/create-game", (req, res) => {
     res.render("create-game", { gameCode })
 })
 
-router.get("/waiting-room", (req,res) => {
-     // Get gameCode from query parameter
-     const gameCode = req.query.gameCode || ""
-     res.render("waiting-room", { gameCode })
+// Waiting room route with game code validation
+router.get("/waiting-room", async (req, res) => {
+    const gameCode = req.query.gameCode || ""
+    
+    if (!gameCode) {
+        return res.status(400).send("Game code is required")
+    }
+    
+    try {
+        // Check if the game exists
+        const exists = await mongoDao.gameExists(gameCode)
+        if (!exists) {
+            return res.status(404).send("Game not found. Please check your game code.")
+        }
+        
+        res.render("waiting-room", { gameCode })
+    } catch (error) {
+        console.error("Error checking game:", error)
+        res.status(500).send("Error accessing game")
+    }
 })
 
 // Waiting room form submission 
-router.post('/waiting-room', (req, res) => {
+router.post('/waiting-room', async (req, res) => {
     const { playerName, gameCode } = req.body
     console.log("Joining game with:", playerName, gameCode)
     
-    mongoDao.joinGame({ playerName, gameCode })
-    .then((result) => {
-        res.redirect('/waiting-room') 
-    })
-    .catch((error) => {
+    try {
+        // Check if game exists before allowing join
+        const exists = await mongoDao.gameExists(gameCode)
+        if (!exists) {
+            return res.status(404).send("Game not found. Please check your game code.")
+        }
+        
+        await mongoDao.joinGame({ playerName, gameCode })
+        res.redirect(`/waiting-room?gameCode=${gameCode}`)
+    } catch (error) {
         if (error.message.includes("E11000")) {
-            res.status(400).send("Error: Game or player name already exists")
+            res.status(400).send("Error: Player name already exists in this game")
         } else {
             console.error("Database error:", error)
             res.status(500).send(error.message)
         }
-    })
-})
-// Join with game code 
-router.post('/join-game', (req, res) => {
-    const { gameCode } = req.body
-    console.log("Joining game with:", gameCode)
-    
-    //res.redirect("/waiting-room")
-    // Pass gameCode as query parameter to waiting room
-    res.redirect(`/waiting-room?gameCode=${gameCode}`)
+    }
 })
 
-// Join game form submission for player creating game 
-router.post('/create-game', (req, res) => {
-    const { playerName, gameCode } = req.body
-    console.log("Joining game with:", playerName, gameCode)
+// Join with game code validation
+router.post('/join-game', async (req, res) => {
+    const { gameCode } = req.body
+    console.log("Attempting to join game with code:", gameCode)
     
-    mongoDao.joinGame({ playerName, gameCode })
-    .then((result) => {
-        res.redirect('/waiting-room') 
-    })
-    .catch((error) => {
+    try {
+        // Check if the game exists
+        const exists = await mongoDao.gameExists(gameCode)
+        if (!exists) {
+            return res.status(404).send("Game not found. Please check your game code and try again.")
+        }
+        
+        // If game exists, redirect to waiting room
+        res.redirect(`/waiting-room?gameCode=${gameCode}`)
+    } catch (error) {
+        console.error("Error checking game:", error)
+        res.status(500).send("Error accessing game")
+    }
+})
+
+// Create game form submission - this actually creates the game
+router.post('/create-game', async (req, res) => {
+    const { playerName, gameCode, cardsPerPlayer } = req.body
+    console.log("Creating game with:", playerName, gameCode)
+    
+    try {
+        // Create the game with the creator as first player
+        await mongoDao.createGame(gameCode, playerName)
+        res.redirect(`/waiting-room?gameCode=${gameCode}`)
+    } catch (error) {
         if (error.message.includes("E11000")) {
-            res.status(400).send("Error: Game or player name already exists")
+            res.status(400).send("Error: Game code already exists. Please try again.")
         } else {
             console.error("Database error:", error)
             res.status(500).send(error.message)
         }
-    })
+    }
 })
 
 // Creates random string 

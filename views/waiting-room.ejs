@@ -69,6 +69,19 @@
             }
         });
 
+          // Listen for players list updates for this specific game
+        socket.on('players list update', function(data) {
+            if (data.gameCode === gameCode) {
+                playersList.innerHTML = '';
+                data.players.forEach(function(player) {
+                    var li = document.createElement('li');
+                    li.textContent = player.playerName;
+                    playersList.appendChild(li);
+                });
+            }
+        });
+
+        
         // Handle connection
         socket.on('connect', function() {
             console.log('Connected to server');

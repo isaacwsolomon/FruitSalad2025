@@ -41,4 +41,35 @@ var getPlayersInGame = function(gameCode) {
     })
 }
 
-module.exports = {joinGame, getPlayersInGame}
+// Check if a game exists - has a player in it 
+var gameExists = function(gameCode) {
+    return new Promise((resolve, reject) => {
+        coll.findOne({ gameCode: gameCode })
+        .then((game) => {
+            resolve(!!game) // Returns true if game exists, false if not
+        })
+        .catch((error) => {
+            reject(error)
+        })
+    })
+}
+
+// Create a new game - called when creating a game
+var createGame = function(gameCode, creatorName) {
+    return new Promise((resolve, reject) => {
+        // Insert the game creator as the first player
+        coll.insertOne({ 
+            gameCode: gameCode, 
+            playerName: creatorName,
+            isCreator: true,
+            createdAt: new Date()
+        })
+        .then((result) => {
+            resolve(result)
+        })
+        .catch((error) => {
+            reject(error)
+        })
+    })
+}
+module.exports = {joinGame, getPlayersInGame, gameExists, createGame}
