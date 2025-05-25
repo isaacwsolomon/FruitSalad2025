@@ -27,4 +27,18 @@ var joinGame = function(gameData){
     })
 }
 
-module.exports = {joinGame}
+// Get all players in a specific game
+var getPlayersInGame = function(gameCode) {
+    return new Promise((resolve, reject) => {
+        // Find all documents with the given gameCode
+        coll.find({ gameCode: gameCode }).toArray()
+        .then((players) => {
+            resolve(players)
+        })
+        .catch((error) => {
+            reject(error)
+        })
+    })
+}
+
+module.exports = {joinGame, getPlayersInGame}

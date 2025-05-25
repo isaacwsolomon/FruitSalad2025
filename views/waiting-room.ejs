@@ -7,47 +7,79 @@
 </head>
 <body>
     <h1>Waiting Room</h1>
+    <h2>Game Code: <%= gameCode %></h2>
    
-    
     <div id="playerList">
         <h2>Players in game</h2>
         <ul id="players">
-            
-            <li>Player name functionality coming soon </li>
+            <!-- Players will be populated here -->
         </ul>
     </div>
-    <ul id="waitingRoomPlayers">
-        <form action="/waiting-room" method="POST" id="form">
-            <input type="hidden" name="gameCode" value="<%= gameCode %>">
+
+    <div id="joinSection">
+        <form id="joinForm">
+            <input type="hidden" id="gameCode" value="<%= gameCode %>">
             <div>
                 <label for="playerName">Your Name:</label>
                 <input type="text" id="playerName" name="playerName" required>
             </div>
             <button type="submit">Join Game</button>
         </form>
-    </ul>
+    </div>
+    
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      var socket = io();
-    
-      var waitingRoomPlayers = document.getElementById('waitingRoomPlayers');
-      var form = document.getElementById('form');
-      var playerName = document.getElementById('playerName');
-    
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (playerName.value) {
-          socket.emit('chat message', playerName.value);
-          playerName.value = '';
-        }
-      });
+        var socket = io();
+        var gameCode = document.getElementById('gameCode').value;
+        var playersList = document.getElementById('players');
+        var joinForm = document.getElementById('joinForm');
+        var playerNameInput = document.getElementById('playerName');
 
-      socket.on('chat message', function(msg) {
-    var item = document.createElement('li');
-    item.textContent = msg;
-    waitingRoomPlayers.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
-  });
+        // Request current players when page loads
+        socket.emit('get players', gameCode);
+
+        // Handle form submission
+        joinForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (playerNameInput.value.trim()) {
+                // Emit join game event with proper data structure
+                socket.emit('join game', {
+                    playerName: playerNameInput.value.trim(),
+                    gameCode: gameCode
+                });
+                playerNameInput.value = '';
+            }
+        });
+
+        // Listen for players list updates
+        socket.on('players list', function(players) {
+            playersList.innerHTML = '';
+            players.forEach(function(player) {
+                var li = document.createElement('li');
+                li.textContent = player.playerName;
+                playersList.appendChild(li);
+            });
+        });
+
+        // Listen for new player joined
+        socket.on('player joined', function(data) {
+            if (data.gameCode === gameCode) {
+                // Request updated players list
+                socket.emit('get players', gameCode);
+            }
+        });
+
+        // Handle connection
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            // Re-request players on reconnect
+            socket.emit('get players', gameCode);
+        });
+
+        // Handle errors
+        socket.on('error', function(error) {
+            alert('Error: ' + error.message);
+        });
     </script>
 </body>
 </html>
