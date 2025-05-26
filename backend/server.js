@@ -1,23 +1,21 @@
-    // server.js
-    const express = require('express')
-    const app = express()
-    const http = require('http')
-    const server = http.createServer(app)
-    
-    const mongoDao = require('./mongoDao')
-    const io = require('socket.io')(server)
-    // Middleware setup
-    app.use(express.static('public'))
-    app.set('view engine', 'ejs')
-    app.use(express.json())
-    app.use(express.urlencoded({ extended: true }))
+// server.js
+const express = require('express')
+const app = express()
+const http = require('http')
+const server = http.createServer(app)
 
-  
-    // Import and use routes
-    const gameRoutes = require('./routes')
-    app.use('/', gameRoutes)
+const mongoDao = require('./mongoDao')
+const io = require('socket.io')(server)
 
-    
+// Middleware setup
+app.use(express.static('public'))
+app.set('view engine', 'ejs')
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
+// Import and use routes
+const gameRoutes = require('./routes')
+app.use('/', gameRoutes)
 
 // Socket.IO event handlers
 io.on('connection', socket => {
@@ -26,6 +24,8 @@ io.on('connection', socket => {
     // When a client requests players for a game
     socket.on('get players', async (gameCode) => {
         try {
+            console.log('Getting players for game:', gameCode);
+            
             // First check if the game exists
             const exists = await mongoDao.gameExists(gameCode);
             if (!exists) {
@@ -35,7 +35,9 @@ io.on('connection', socket => {
             
             // Get players from database for this game code
             const players = await mongoDao.getPlayersInGame(gameCode);
-            // Send players list back to client
+            console.log('Found players:', players);
+            
+            // Send players list back to THIS client only
             socket.emit('players list', players);
         } catch (error) {
             console.error('Error getting players:', error);
@@ -46,6 +48,8 @@ io.on('connection', socket => {
     // When a client joins a game
     socket.on('join game', async (data) => {
         try {
+            console.log('Player joining game:', data);
+            
             // Validate that game exists before allowing join
             const exists = await mongoDao.gameExists(data.gameCode);
             if (!exists) {
@@ -56,22 +60,26 @@ io.on('connection', socket => {
             // Save player to database
             await mongoDao.joinGame({
                 playerName: data.playerName,
-                gameCode: data.gameCode
-            });
-            
-            // Get updated players list and broadcast to all clients for this game
-            const updatedPlayers = await mongoDao.getPlayersInGame(data.gameCode);
-            
-            // Broadcast updated players list to all clients
-            io.emit('players list update', {
                 gameCode: data.gameCode,
-                players: updatedPlayers
+                isCreator: false  // Explicitly set as not creator
             });
             
-            // Also emit player joined event
-            io.emit('player joined', {
+            console.log('Player successfully joined');
+            
+            // Send success confirmation to the player who just joined
+            socket.emit('join success', {
                 playerName: data.playerName,
                 gameCode: data.gameCode
+            });
+            
+            // Get updated players list
+            const updatedPlayers = await mongoDao.getPlayersInGame(data.gameCode);
+            console.log('Broadcasting updated players:', updatedPlayers);
+            
+            // Broadcast updated players list to ALL clients
+            io.emit('game updated', {
+                gameCode: data.gameCode,
+                players: updatedPlayers
             });
             
         } catch (error) {
@@ -83,8 +91,14 @@ io.on('connection', socket => {
             }
         }
     });
+
+    // Handle client disconnect
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
 })
-    // Start server
-    server.listen(3004, () => {
-        console.log("Server running on port 3004")
-    })
+
+// Start server
+server.listen(3004, () => {
+    console.log("Server running on port 3004")
+})

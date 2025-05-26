@@ -9,6 +9,9 @@
     <h1>Waiting Room</h1>
     <h2>Game Code: <%= gameCode %></h2>
    
+    <!-- Hidden input that always exists for JavaScript to access -->
+    <input type="hidden" id="gameCode" value="<%= gameCode %>">
+   
     <div id="playerList">
         <h2>Players in game</h2>
         <ul id="players">
@@ -16,9 +19,9 @@
         </ul>
     </div>
 
+    <% if (!isCreator) { %>
     <div id="joinSection">
         <form id="joinForm">
-            <input type="hidden" id="gameCode" value="<%= gameCode %>">
             <div>
                 <label for="playerName">Your Name:</label>
                 <input type="text" id="playerName" name="playerName" required>
@@ -27,71 +30,127 @@
         </form>
     </div>
     
+    <div id="joinedMessage" style="display: none;">
+        <h3>✅ You have joined the game!</h3>
+        <p>Waiting for other players...</p>
+    </div>
+    <% } else { %>
+    <div id="creatorMessage">
+        <h3>🎮 You are the game creator!</h3>
+        <p>Share the game code <strong><%= gameCode %></strong> with other players so they can join.</p>
+        <p>Waiting for other players to join...</p>
+    </div>
+    <% } %>
+    
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Get values from server-side variables
+        var isCreatorValue = <%= JSON.stringify(isCreator) %>;
+        var gameCodeValue = '<%= gameCode %>';
+        
         var socket = io();
         var gameCode = document.getElementById('gameCode').value;
         var playersList = document.getElementById('players');
         var joinForm = document.getElementById('joinForm');
+        var joinSection = document.getElementById('joinSection');
+        var joinedMessage = document.getElementById('joinedMessage');
         var playerNameInput = document.getElementById('playerName');
+        var hasJoined = isCreatorValue; // Creator should be marked as joined
+
+        console.log('Is Creator:', isCreatorValue);
+        console.log('Game Code:', gameCode);
 
         // Request current players when page loads
         socket.emit('get players', gameCode);
 
-        // Handle form submission
-        joinForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (playerNameInput.value.trim()) {
-                // Emit join game event with proper data structure
-                socket.emit('join game', {
-                    playerName: playerNameInput.value.trim(),
-                    gameCode: gameCode
-                });
-                playerNameInput.value = '';
-            }
-        });
+        // Handle form submission (only if form exists - i.e., not creator)
+        if (joinForm) {
+            joinForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (playerNameInput.value.trim() && !hasJoined) {
+                    // Emit join game event with proper data structure
+                    socket.emit('join game', {
+                        playerName: playerNameInput.value.trim(),
+                        gameCode: gameCode
+                    });
+                    
+                    // Disable the form while waiting for response
+                    joinForm.style.opacity = '0.5';
+                    playerNameInput.disabled = true;
+                    joinForm.querySelector('button').disabled = true;
+                }
+            });
+        }
 
         // Listen for players list updates
         socket.on('players list', function(players) {
-            playersList.innerHTML = '';
-            players.forEach(function(player) {
-                var li = document.createElement('li');
-                li.textContent = player.playerName;
-                playersList.appendChild(li);
-            });
+            console.log('Received players list:', players);
+            updatePlayersList(players);
         });
 
-        // Listen for new player joined
-        socket.on('player joined', function(data) {
+        // Listen for game updates (when new players join)
+        socket.on('game updated', function(data) {
+            console.log('Game updated event:', data);
             if (data.gameCode === gameCode) {
-                // Request updated players list
-                socket.emit('get players', gameCode);
+                updatePlayersList(data.players);
             }
         });
 
-          // Listen for players list updates for this specific game
-        socket.on('players list update', function(data) {
+        // Listen for successful join confirmation
+        socket.on('join success', function(data) {
+            console.log('Join success:', data);
             if (data.gameCode === gameCode) {
-                playersList.innerHTML = '';
-                data.players.forEach(function(player) {
+                hasJoined = true;
+                // Hide the join form and show success message
+                if (joinSection) {
+                    joinSection.style.display = 'none';
+                }
+                if (joinedMessage) {
+                    joinedMessage.style.display = 'block';
+                }
+            }
+        });
+
+        // Function to update players list (avoiding duplication)
+        function updatePlayersList(players) {
+            playersList.innerHTML = '';
+            if (players.length === 0) {
+                var li = document.createElement('li');
+                li.textContent = 'No players yet...';
+                li.style.fontStyle = 'italic';
+                li.style.color = '#666';
+                playersList.appendChild(li);
+            } else {
+                players.forEach(function(player) {
                     var li = document.createElement('li');
                     li.textContent = player.playerName;
+                    if (player.isCreator) {
+                        li.textContent += ' (Creator)';
+                        li.style.fontWeight = 'bold';
+                        li.style.color = '#007bff';
+                    }
                     playersList.appendChild(li);
                 });
             }
-        });
+        }
 
-        
         // Handle connection
         socket.on('connect', function() {
-            console.log('Connected to server');
+            console.log('Connected to server with ID:', socket.id);
             // Re-request players on reconnect
             socket.emit('get players', gameCode);
         });
 
         // Handle errors
         socket.on('error', function(error) {
+            console.error('Socket error:', error);
             alert('Error: ' + error.message);
+            // Re-enable the form on error (only if form exists)
+            if (joinForm) {
+                joinForm.style.opacity = '1';
+                playerNameInput.disabled = false;
+                joinForm.querySelector('button').disabled = false;
+            }
         });
     </script>
 </body>

@@ -22,6 +22,7 @@ router.get("/create-game", (req, res) => {
 // Waiting room route with game code validation
 router.get("/waiting-room", async (req, res) => {
     const gameCode = req.query.gameCode || ""
+    const isCreator = req.query.creator === 'true' // Check if user is creator
     
     if (!gameCode) {
         return res.status(400).send("Game code is required")
@@ -34,7 +35,8 @@ router.get("/waiting-room", async (req, res) => {
             return res.status(404).send("Game not found. Please check your game code.")
         }
         
-        res.render("waiting-room", { gameCode })
+        // FIXED: Pass both gameCode AND isCreator to the template
+        res.render("waiting-room", { gameCode, isCreator })
     } catch (error) {
         console.error("Error checking game:", error)
         res.status(500).send("Error accessing game")
@@ -78,7 +80,7 @@ router.post('/join-game', async (req, res) => {
         }
         
         // If game exists, redirect to waiting room
-        res.redirect(`/waiting-room?gameCode=${gameCode}`)
+        res.redirect(`/waiting-room?gameCode=${gameCode}&creator=false`)
     } catch (error) {
         console.error("Error checking game:", error)
         res.status(500).send("Error accessing game")
@@ -93,7 +95,7 @@ router.post('/create-game', async (req, res) => {
     try {
         // Create the game with the creator as first player
         await mongoDao.createGame(gameCode, playerName)
-        res.redirect(`/waiting-room?gameCode=${gameCode}`)
+        res.redirect(`/waiting-room?gameCode=${gameCode}&creator=true`)
     } catch (error) {
         if (error.message.includes("E11000")) {
             res.status(400).send("Error: Game code already exists. Please try again.")

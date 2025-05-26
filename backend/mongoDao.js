@@ -2,20 +2,24 @@ const MongoClient = require('mongodb').MongoClient
 
 MongoClient.connect('mongodb+srv://admin:admin@fruitsalad.8eeyqzf.mongodb.net/?retryWrites=true&w=majority&appName=FruitSalad')
 .then((client) => {
-db = client.db('FruitSalad')
-coll = db.collection('gamedetails')
+    db = client.db('FruitSalad')
+    coll = db.collection('gamedetails')
 })
 .catch((error) => {
-console.log(error.message)
+    console.log(error.message)
 })
 
-
-
 var joinGame = function(gameData){
-    return new Promise((resolve,reject) =>{
-    
+    return new Promise((resolve,reject) => {
+        // Ensure isCreator is set to false for regular joins
+        const playerData = {
+            ...gameData,
+            isCreator: gameData.isCreator || false,
+            joinedAt: new Date()
+        };
+        
         // Inserts item into collection 
-        coll.insertOne(gameData)
+        coll.insertOne(playerData)
         .then((documents) => {
             // Resolve promise
             resolve(documents)
@@ -30,8 +34,10 @@ var joinGame = function(gameData){
 // Get all players in a specific game
 var getPlayersInGame = function(gameCode) {
     return new Promise((resolve, reject) => {
-        // Find all documents with the given gameCode
-        coll.find({ gameCode: gameCode }).toArray()
+        // Find all documents with the given gameCode, sorted by join time
+        coll.find({ gameCode: gameCode })
+            .sort({ createdAt: 1, joinedAt: 1 }) // Creator first, then by join time
+            .toArray()
         .then((players) => {
             resolve(players)
         })
@@ -72,4 +78,5 @@ var createGame = function(gameCode, creatorName) {
         })
     })
 }
+
 module.exports = {joinGame, getPlayersInGame, gameExists, createGame}
