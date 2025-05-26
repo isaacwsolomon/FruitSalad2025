@@ -4,19 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Waiting Room</title>
+    <link rel="stylesheet" href="/css/waiting-room.css">
 </head>
 <body>
     <h1>Waiting Room</h1>
     <h2>Game Code: <%= gameCode %></h2>
    
-    <!-- Hidden input that always exists for JavaScript to access -->
     <input type="hidden" id="gameCode" value="<%= gameCode %>">
    
     <div id="playerList">
         <h2>Players in game</h2>
-        <ul id="players">
-            <!-- Players will be populated here -->
-        </ul>
+        <ul id="players"></ul>
     </div>
 
     <% if (!isCreator) { %>
@@ -42,115 +40,17 @@
     </div>
     <% } %>
     
+    <!-- Load libraries -->
     <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- Load JavaScript -->
+    <script src="/waiting-room.js"></script>
+    
+    <!-- Initialize the app -->
     <script>
-        // Get values from server-side variables
-        var isCreatorValue = <%= JSON.stringify(isCreator) %>;
-        var gameCodeValue = '<%= gameCode %>';
-        
-        var socket = io();
-        var gameCode = document.getElementById('gameCode').value;
-        var playersList = document.getElementById('players');
-        var joinForm = document.getElementById('joinForm');
-        var joinSection = document.getElementById('joinSection');
-        var joinedMessage = document.getElementById('joinedMessage');
-        var playerNameInput = document.getElementById('playerName');
-        var hasJoined = isCreatorValue; // Creator should be marked as joined
-
-        console.log('Is Creator:', isCreatorValue);
-        console.log('Game Code:', gameCode);
-
-        // Request current players when page loads
-        socket.emit('get players', gameCode);
-
-        // Handle form submission (only if form exists - i.e., not creator)
-        if (joinForm) {
-            joinForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                if (playerNameInput.value.trim() && !hasJoined) {
-                    // Emit join game event with proper data structure
-                    socket.emit('join game', {
-                        playerName: playerNameInput.value.trim(),
-                        gameCode: gameCode
-                    });
-                    
-                    // Disable the form while waiting for response
-                    joinForm.style.opacity = '0.5';
-                    playerNameInput.disabled = true;
-                    joinForm.querySelector('button').disabled = true;
-                }
-            });
-        }
-
-        // Listen for players list updates
-        socket.on('players list', function(players) {
-            console.log('Received players list:', players);
-            updatePlayersList(players);
-        });
-
-        // Listen for game updates (when new players join)
-        socket.on('game updated', function(data) {
-            console.log('Game updated event:', data);
-            if (data.gameCode === gameCode) {
-                updatePlayersList(data.players);
-            }
-        });
-
-        // Listen for successful join confirmation
-        socket.on('join success', function(data) {
-            console.log('Join success:', data);
-            if (data.gameCode === gameCode) {
-                hasJoined = true;
-                // Hide the join form and show success message
-                if (joinSection) {
-                    joinSection.style.display = 'none';
-                }
-                if (joinedMessage) {
-                    joinedMessage.style.display = 'block';
-                }
-            }
-        });
-
-        // Function to update players list (avoiding duplication)
-        function updatePlayersList(players) {
-            playersList.innerHTML = '';
-            if (players.length === 0) {
-                var li = document.createElement('li');
-                li.textContent = 'No players yet...';
-                li.style.fontStyle = 'italic';
-                li.style.color = '#666';
-                playersList.appendChild(li);
-            } else {
-                players.forEach(function(player) {
-                    var li = document.createElement('li');
-                    li.textContent = player.playerName;
-                    if (player.isCreator) {
-                        li.textContent += ' (Creator)';
-                        li.style.fontWeight = 'bold';
-                        li.style.color = '#007bff';
-                    }
-                    playersList.appendChild(li);
-                });
-            }
-        }
-
-        // Handle connection
-        socket.on('connect', function() {
-            console.log('Connected to server with ID:', socket.id);
-            // Re-request players on reconnect
-            socket.emit('get players', gameCode);
-        });
-
-        // Handle errors
-        socket.on('error', function(error) {
-            console.error('Socket error:', error);
-            alert('Error: ' + error.message);
-            // Re-enable the form on error (only if form exists)
-            if (joinForm) {
-                joinForm.style.opacity = '1';
-                playerNameInput.disabled = false;
-                joinForm.querySelector('button').disabled = false;
-            }
+        // Only pass data from server to client here
+        document.addEventListener('DOMContentLoaded', function() {
+            new WaitingRoom('<%= gameCode %>', <%= JSON.stringify(isCreator) %>);
         });
     </script>
 </body>
