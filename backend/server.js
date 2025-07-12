@@ -82,7 +82,7 @@ io.on('connection', socket => {
                 return;
             }
             // save submission 
-            await mongoDao.submitSentence(data.gameCode, data.PlayerName, data.sentence);
+            await mongoDao.submitSentence(data.gameCode, data.playerName, data.sentence);
             //get updated submission count
             const newCount = await mongoDao.getPlayerSubmissionCount(data.gameCode, data.playerName);
 

@@ -150,5 +150,52 @@ var getGameSubmissions = function(gameCode){
         })
     })
 }
+// update game status 
+var updateGameStatus = function (gameCode, status){
+    return new Promise((resolve, reject) => {
+        gamesColl.updateOne(
+            {gameCode : gameCode},
+            {$set : {status: status , updatedAt: new Date()}}
+        )
+        .then((result) => {
+            resolve(result)
+        })
+        .catch((error) => {
+            reject(error)
+        })
 
-module.exports = {joinGame, getPlayersInGame, gameExists, createGame, getGameSettings, submitSentence, getPlayerSubmissionCount, getGameSubmissions}
+    })
+}
+// Check if all players have completed their submissions
+var checkAllPlayersComplete = function(gameCode) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Get game settings and player count
+            const gameSettings = await getGameSettings(gameCode);
+            const players = await getPlayersInGame(gameCode);
+            
+            if (!gameSettings) {
+                resolve(false);
+                return;
+            }
+            
+            const cardsPerPlayer = gameSettings.cardsPerPlayer;
+            
+            // Check each player's submission count
+            let allComplete = true;
+            for (let player of players) {
+                const count = await getPlayerSubmissionCount(gameCode, player.playerName);
+                if (count < cardsPerPlayer) {
+                    allComplete = false;
+                    break;
+                }
+            }
+            
+            resolve(allComplete);
+        } catch (error) {
+            reject(error);
+        }
+    })
+}
+
+module.exports = {joinGame, getPlayersInGame, gameExists, createGame, getGameSettings, submitSentence, getPlayerSubmissionCount, getGameSubmissions, updateGameStatus, checkAllPlayersComplete}
