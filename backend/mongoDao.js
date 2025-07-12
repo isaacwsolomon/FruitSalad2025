@@ -4,6 +4,8 @@ MongoClient.connect('mongodb+srv://admin:admin@fruitsalad.8eeyqzf.mongodb.net/?r
 .then((client) => {
     db = client.db('FruitSalad')
     coll = db.collection('gamedetails')
+    gamesColl - db.collection('games') // Collectuon for game settings
+    submissionColl = db.collection('submissions') //Collection for player submissions
 })
 .catch((error) => {
     console.log(error.message)
@@ -63,13 +65,22 @@ var gameExists = function(gameCode) {
 // Create a new game - called when creating a game
 var createGame = function(gameCode, creatorName) {
     return new Promise((resolve, reject) => {
-        // Insert the game creator as the first player
-        coll.insertOne({ 
-            gameCode: gameCode, 
-            playerName: creatorName,
-            isCreator: true,
-            createdAt: new Date()
+        gamesColl.insertOne({
+            gameCode: gameCode,
+            cardsPerPlayer: parseInt(cardsPerPlayer),
+            createdAt: new Date(),
+            status: 'waiting' // waiting, playing, finsihed
         })
+        .then(() =>{
+            // Insert the game creator as the first player
+            return coll.insertOne({ 
+                gameCode: gameCode, 
+                playerName: creatorName,
+                isCreator: true,
+                createdAt: new Date()
+            })
+        })
+        
         .then((result) => {
             resolve(result)
         })
@@ -79,4 +90,64 @@ var createGame = function(gameCode, creatorName) {
     })
 }
 
-module.exports = {joinGame, getPlayersInGame, gameExists, createGame}
+// Get game settings including cards per player
+var getGameSettings = function(gameCode){
+    return new Promise((resolve, reject) => {
+        gamesColl.findOne({gameCode : gameCode})
+        .then((game) => {
+            resolve(game)
+        })
+        .catch((error) => {
+            reject(error)
+        })
+    })
+}
+
+// Submit a sentece for a player
+var submitSentence = function(gameCode, playerName, sentece){
+    return new Promise((resolve, reject) => {
+        submissionColl.insertOne({
+            gameCode: gameCode,
+            playerName: playerName,
+            sentece: sentece,
+            submittedAt: new Date()
+        })
+        .then((result) => {
+            resolve(result)
+        })
+        .catch((error) => {
+            reject(error)
+        })
+    })
+}
+// getPlayerSubmissionCount
+var getPlayerSubmissionCount = function(gameCode, playerName){
+    return new Promise((resolve, reject) => {
+        submissionColl.countDocuments({
+            gameCode: gameCode,
+            playerName: playerName
+        })
+        .then((count) => {
+            resolve(count)
+        })
+        .catch((error) =>{
+            reject(error)
+        })
+    })
+}
+// get all submissions 
+var getGameSubmissions = function(gameCode){
+    return new Promise((resolve, reject) => {
+        submissionColl.find({gameCode: gameCode})
+        .sort({submittedAt: 1})
+        .toArray()
+        .then((submissions) => {
+            resolve(submissions)
+        })
+        .catch((error) => {
+            reject(error)
+        })
+    })
+}
+
+module.exports = {joinGame, getPlayersInGame, gameExists, createGame, getGameSettings, submitSentence, getPlayerSubmissionCount, getGameSubmissions}
