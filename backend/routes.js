@@ -34,9 +34,13 @@ router.get("/waiting-room", async (req, res) => {
         if (!exists) {
             return res.status(404).send("Game not found. Please check your game code.")
         }
+        // get game settings to pass cards per player limit
+        const gameSettings = await mongoDao.getGameSettings(gameCode)
+        // If no game found default to 5 cards per player
+        const cardsPerPlayer = gameSettings ? gameSettings.cardsPerPlayer: 5
         
-        // FIXED: Pass both gameCode AND isCreator to the template
-        res.render("waiting-room", { gameCode, isCreator })
+        // Pass both gameCode AND isCreator to the template and cardsPerPlayer
+        res.render("waiting-room", { gameCode, isCreator, cardsPerPlayer })
     } catch (error) {
         console.error("Error checking game:", error)
         res.status(500).send("Error accessing game")
