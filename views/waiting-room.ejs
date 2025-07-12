@@ -9,9 +9,12 @@
 <body>
     <h1>Waiting Room</h1>
     <h2>Game Code: <%= gameCode %></h2>
-   
+    <p><strong>Cards per Player: </strong><%= cardsPerPlayer</p>
+
     <input type="hidden" id="gameCode" value="<%= gameCode %>">
-   
+    <input type="hidden" id="cardsPerPlayer" value="<%= cardsPerPlayer">
+
+
     <div id="playerList">
         <h2>Players in game</h2>
         <ul id="players"></ul>
@@ -39,7 +42,21 @@
         <p>Waiting for other players to join...</p>
     </div>
     <% } %>
-    
+    <!-- Sentence Submission Section -->
+     <div id="submissionSection" style="display: none;">
+     <h3>Submit your words / sentences!!</h3>
+     <div id="submissionStatus">
+        <p>Submissions: <span id="submissionCount">0</span> / <span id="maxSubmissions"> <%=cardsPerPlayer %> </span></p>
+     </div>
+
+     <form id="sentenceForm">
+        <div>
+            <label for="sentenceInput">Enter a here: </label>
+            <textarea id="sentenceInput" name="sentence" rows="3" cols="50" required
+            placeholder="Write something cool"></textarea>
+        </div>
+        <button type="submit" id="submitSentenceBtn">Submit sentence</button>
+     </form>
     <!-- Load libraries -->
     <script src="/socket.io/socket.io.js"></script>
     
