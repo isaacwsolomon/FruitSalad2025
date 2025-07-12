@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true }))
 
 // Import and use routes
 const gameRoutes = require('./routes')
+const { SocketAddress } = require('net')
 app.use('/', gameRoutes)
 
 // Socket.IO event handlers
@@ -44,7 +45,67 @@ io.on('connection', socket => {
             socket.emit('error', { message: 'Failed to get players' });
         }
     });
-  
+    // get players current submission count 
+    socket.on('get submission count', async (data) =>{
+        try{
+            const count = await mongoDao.getPlayerSubmissionCount(data.gameCode, data.playerName);
+            socket.emit('submission count', {
+                gameCode: data.gameCode,
+                playerName: data.playerName,
+                count:count
+            
+            });
+        } catch(error){
+            console.error('Error getting submission count: ', error);
+            socket.emit('error', {message: 'Failed to get submission count'});
+        }
+    });
+    // Handle sentence submission 
+    socket.on('submit sentence', async (data) => {
+        try{
+            console.log('Sentence submission: ', data);
+            // validate that game exists 
+            const exists = await mongoDao.gameExists(data.gameCode);
+            if(!exists){
+                socket.emit('error', {message: 'Game not found'});
+                return;
+            }
+
+            // get game settings to check card limit
+            const gameSettings = await mongoDao.getGameSettings(data.gameCode);
+            const cardsPerPlayer = gameSettings ? gameSettings.cardsPerPlayer :5;
+
+            // Check if player has reached submission limit 
+            const currentCount = await mongoDao.getPlayerSubmissionCount(data.gameCode, data.playerName);
+            if(currentCount >= cardsPerPlayer){
+                socket.emit('error', {message: 'You have reached maxium number of submissions '});
+                return;
+            }
+            // save submission 
+            await mongoDao.submitSentence(data.gameCode, data.PlayerName, data.sentence);
+            //get updated submission count
+            const newCount = await mongoDao.getPlayerSubmissionCount(data.gameCode, data.playerName);
+
+            // send success confirmation 
+            socket.emit('submission success', {
+                gameCode: data.gameCode,
+                playerName: data.playerName,
+                newCount: newCount,
+                maxCount: cardsPerPlayer
+            });
+
+            //Broadcast to all clients that submission was mafe 
+            io.emit('submission update', {
+                gameCode: data.gameCode,
+                playerName: data.playerName,
+                submissionCount: newCount,
+                maxCount: cardsPerPlayer
+            });
+        }catch (error){
+        console.error('error submitting sentence: ', error);
+        socket.emit('error', {message: 'Failed to submit sentence'});
+        }
+    });
     // When a client joins a game
     socket.on('join game', async (data) => {
         try {
