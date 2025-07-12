@@ -107,7 +107,7 @@ var getGameSettings = function(gameCode){
 // Submit a sentence for a player
 var submitSentence = function(gameCode, playerName, sentence){
     return new Promise((resolve, reject) => {
-        submissionColl.insertOne({
+        submissionsColl.insertOne({
             gameCode: gameCode,
             playerName: playerName,
             sentence: sentence,
@@ -124,7 +124,7 @@ var submitSentence = function(gameCode, playerName, sentence){
 // getPlayerSubmissionCount
 var getPlayerSubmissionCount = function(gameCode, playerName){
     return new Promise((resolve, reject) => {
-        submissionColl.countDocuments({
+        submissionsColl.countDocuments({
             gameCode: gameCode,
             playerName: playerName
         })
@@ -139,7 +139,7 @@ var getPlayerSubmissionCount = function(gameCode, playerName){
 // get all submissions 
 var getGameSubmissions = function(gameCode){
     return new Promise((resolve, reject) => {
-        submissionColl.find({gameCode: gameCode})
+        submissionsColl.find({gameCode: gameCode})
         .sort({submittedAt: 1})
         .toArray()
         .then((submissions) => {
