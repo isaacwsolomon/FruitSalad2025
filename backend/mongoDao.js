@@ -1,10 +1,11 @@
 const MongoClient = require('mongodb').MongoClient
-
+// Declare the collection variables
+let db, coll, gamesColl, submissionsColl;
 MongoClient.connect('mongodb+srv://admin:admin@fruitsalad.8eeyqzf.mongodb.net/?retryWrites=true&w=majority&appName=FruitSalad')
 .then((client) => {
     db = client.db('FruitSalad')
     coll = db.collection('gamedetails')
-    gamesColl - db.collection('games') // Collectuon for game settings
+    gamesColl = db.collection('games') // Collectuon for game settings
     submissionColl = db.collection('submissions') //Collection for player submissions
 })
 .catch((error) => {
@@ -104,7 +105,7 @@ var getGameSettings = function(gameCode){
 }
 
 // Submit a sentece for a player
-var submitSentence = function(gameCode, playerName, sentece){
+var submitSentence = function(gameCode, playerName, sentence){
     return new Promise((resolve, reject) => {
         submissionColl.insertOne({
             gameCode: gameCode,
