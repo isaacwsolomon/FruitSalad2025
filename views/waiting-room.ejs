@@ -9,10 +9,10 @@
 <body>
     <h1>Waiting Room</h1>
     <h2>Game Code: <%= gameCode %></h2>
-    <p><strong>Cards per Player: </strong><%= cardsPerPlayer</p>
+    <p><strong>Cards per Player: </strong><%= cardsPerPlayer%></p>
 
     <input type="hidden" id="gameCode" value="<%= gameCode %>">
-    <input type="hidden" id="cardsPerPlayer" value="<%= cardsPerPlayer">
+    <input type="hidden" id="cardsPerPlayer" value="<%= cardsPerPlayer%>">
 
 
     <div id="playerList">
@@ -48,7 +48,7 @@
      <div id="submissionStatus">
         <p>Submissions: <span id="submissionCount">0</span> / <span id="maxSubmissions"> <%=cardsPerPlayer %> </span></p>
      </div>
-
+    </div>
      <form id="sentenceForm">
         <div>
             <label for="sentenceInput">Enter a here: </label>
