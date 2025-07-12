@@ -94,11 +94,13 @@ router.post('/join-game', async (req, res) => {
 // Create game form submission - this actually creates the game
 router.post('/create-game', async (req, res) => {
     const { playerName, gameCode, cardsPerPlayer } = req.body
-    console.log("Creating game with:", playerName, gameCode)
+    console.log("Creating game with:", playerName, gameCode, "Cards per player: ", cardsPerPlayer)
     
+    // Ensure cardsPerPlayer has a default value if not provided
+    const cards = cardsPerPlayer || 5;
     try {
         // Create the game with the creator as first player
-        await mongoDao.createGame(gameCode, playerName)
+        await mongoDao.createGame(gameCode, playerName, cards)
         res.redirect(`/waiting-room?gameCode=${gameCode}&creator=true`)
     } catch (error) {
         if (error.message.includes("E11000")) {

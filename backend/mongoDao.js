@@ -6,7 +6,7 @@ MongoClient.connect('mongodb+srv://admin:admin@fruitsalad.8eeyqzf.mongodb.net/?r
     db = client.db('FruitSalad')
     coll = db.collection('gamedetails')
     gamesColl = db.collection('games') // Collectuon for game settings
-    submissionColl = db.collection('submissions') //Collection for player submissions
+    submissionsColl = db.collection('submissions') //Collection for player submissions
 })
 .catch((error) => {
     console.log(error.message)
@@ -64,7 +64,7 @@ var gameExists = function(gameCode) {
 }
 
 // Create a new game - called when creating a game
-var createGame = function(gameCode, creatorName) {
+var createGame = function(gameCode, creatorName, cardsPerPlayer) {
     return new Promise((resolve, reject) => {
         gamesColl.insertOne({
             gameCode: gameCode,
@@ -104,13 +104,13 @@ var getGameSettings = function(gameCode){
     })
 }
 
-// Submit a sentece for a player
+// Submit a sentence for a player
 var submitSentence = function(gameCode, playerName, sentence){
     return new Promise((resolve, reject) => {
         submissionColl.insertOne({
             gameCode: gameCode,
             playerName: playerName,
-            sentece: sentece,
+            sentence: sentence,
             submittedAt: new Date()
         })
         .then((result) => {
